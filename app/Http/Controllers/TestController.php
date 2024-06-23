@@ -46,26 +46,71 @@ class TestController extends Controller
 
         if (isset($update->message)) {
             $message = $update->message;
-            $message_id = $message->message_id;
             $chat = $message->chat;
             $chat_id = $chat->id;
             $chat_type = $chat->type;
             $from = $message->from;
-            $user_id = $from->id;
             $first_name = $from->first_name;
             $last_name = $from->last_name ?? null;
-            $username = $from->username ?? null;
 
             if (isset($message->text)) {
                 $text = $message->text;
 
                 if ($chat_type == 'private') {
                     if ($text == '/start') {
-                        $text = 'Hello, ' . $first_name . ' ' . $last_name . '!';
+                        $text = "Salom " . $first_name . " " . $last_name . "! \n\nTest javobini tekshirish quyidagicha amalga oshiriladi. \nTestKodi\\*1a2b3c4d...";
                         $this->sendMessage('sendMessage', [
                             'chat_id' => $chat_id,
                             'text' => $text,
+                            'parse_mode' => 'markdown'
                         ]);
+                    } else {
+                        //get first 6 characters from text and get tests by test_code
+                        $test_code = substr($text, 0, 6);
+                        $test = Test::where('test_code', $test_code)->first();
+                        if (!$test) {
+                            $text = "Test topilmadi!";
+                            $this->sendMessage('sendMessage', [
+                                'chat_id' => $chat_id,
+                                'text' => $text,
+                                'parse_mode' => 'markdown'
+                            ]);
+                        } else {
+                            $correctAnswers = json_decode($test->answers, true);
+
+                            $userAnswersText = substr($text, 7); // remove the first 6 characters (the test code)
+                            $userAnswersArray = str_split($userAnswersText); // split the remaining string into an array of characters
+
+                            $userAnswers = [];
+                            for ($i = 0; $i < count($userAnswersArray); $i += 2) {
+                                $userAnswers[$userAnswersArray[$i]] = $userAnswersArray[$i + 1];
+                            }
+
+                            $correctCount = 0;
+                            foreach ($correctAnswers as $question => $correctAnswer) {
+                                if (isset($userAnswers[$question]) && $userAnswers[$question] == $correctAnswer) {
+                                    $correctCount++;
+                                }
+                            }
+
+                            $text = "Siz {$correctCount}ta savolga to'g'ri javob berdingiz.\n\n";
+
+                            foreach ($correctAnswers as $question => $correctAnswer) {
+                                $userAnswer = $userAnswers[$question] ?? 'No answer';
+                                //if user answer is correct then add ✅ emoji else add ❌ emoji and also add the correct answer
+                                $text .= "$question. $userAnswer " . ($userAnswer == $correctAnswer ? '✅' : '❌');
+                                if ($userAnswer != $correctAnswer) {
+                                    $text .= " To'g'ri javob: $correctAnswer";
+                                }
+                                $text .= "\n";
+                            }
+
+                            $this->sendMessage('sendMessage', [
+                                'chat_id' => $chat_id,
+                                'text' => $text,
+                                'parse_mode' => 'markdown'
+                            ]);
+                        }
                     }
                 }
             }
