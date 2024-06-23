@@ -16,6 +16,7 @@ class TestService
         }
 
         $data['answers'] = json_encode($result);
+        $data['test_code'] = rand(100000, 999999);
         Test::create($data);
     }
 }
