@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -17,8 +16,12 @@ return new class extends Migration
 
         $tests = \App\Models\Test::all();
         $tests->each(function ($test) {
+            do {
+                $randomNumber = rand(100000, 999999);
+            } while (\App\Models\Test::where('test_code', $randomNumber)->exists());
+
             $test->update([
-                'test_code' => rand(100000, 999999),
+                'test_code' => $randomNumber
             ]);
         });
     }

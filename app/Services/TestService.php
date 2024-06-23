@@ -16,7 +16,11 @@ class TestService
         }
 
         $data['answers'] = json_encode($result);
-        $data['test_code'] = rand(100000, 999999);
+        do {
+            $randomNumber = rand(100000, 999999);
+        } while (Test::where('test_code', $randomNumber)->exists());
+
+        $data['test_code'] = $randomNumber;
         Test::create($data);
     }
 }
