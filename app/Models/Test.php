@@ -9,6 +9,7 @@ class Test extends Model
     protected $fillable = [
         'name',
         'answers',
-        'status'
+        'status',
+        'test_code',
     ];
 }
